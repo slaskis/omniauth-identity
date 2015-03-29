@@ -10,7 +10,7 @@ module OmniAuth
       option :on_login, nil
       option :on_registration, nil
       option :on_failed_registration, nil
-      option :locate_conditions, lambda{|req| {model.auth_key => params['auth_key']} }
+      option :locate_conditions, lambda{|req| {model.auth_key => request.params['auth_key']} }
 
       def request_phase
         if options[:on_login]
@@ -59,7 +59,7 @@ module OmniAuth
       end
 
       def registration_phase
-        attributes = (options[:fields] + [:password, :password_confirmation]).inject({}){|h,k| h[k] = params[k.to_s]; h}
+        attributes = (options[:fields] + [:password, :password_confirmation]).inject({}){|h,k| h[k] = request.params[k.to_s]; h}
         @identity = model.create(attributes)
         if @identity.persisted?
           env['PATH_INFO'] = callback_path
@@ -92,16 +92,13 @@ module OmniAuth
         else
           conditions = options.locate_conditions.to_hash
         end
-        @identity ||= model.authenticate(conditions, params['password'] )
+        @identity ||= model.authenticate(conditions, request.params['password'] )
       end
 
       def model
         options[:model] || ::Identity
       end
 
-      def params
-        request.env['action_dispatch.request.request_parameters']
-      end
     end
   end
 end
